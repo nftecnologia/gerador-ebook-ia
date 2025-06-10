@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/worker?count=1",
+      "schedule": "* * * * *"
+    }
+  ],
+  "functions": {
+    "app/api/worker/route.ts": {
+      "maxDuration": 300
+    }
+  }
+} 
