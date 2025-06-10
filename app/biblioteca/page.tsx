@@ -14,15 +14,26 @@ import { PageViewer } from "@/components/page-viewer"
 import { useToast } from "@/components/ui/use-toast"
 
 type EbookInLibrary = {
-  id: string
+  id: number
+  uuid: string
   title: string
   description: string
   contentMode: string
   totalPages: number
   completedPages: number
+  failedPages: number
   status: string
-  createdAt: number
-  pages: { index: number; content: string }[]
+  createdAt: string // ISO string do Postgres
+  updatedAt: string
+  pages: { 
+    id: number
+    pageIndex: number
+    pageTitle: string
+    content: string
+    status: string
+    createdAt: string
+    updatedAt: string
+  }[]
 }
 
 export default function BibliotecaPage() {
@@ -86,11 +97,11 @@ export default function BibliotecaPage() {
   }
 
   // Função para excluir um ebook
-  const handleDeleteEbook = async (ebookId: string) => {
+  const handleDeleteEbook = async (ebookUuid: string) => {
     if (!confirm("Tem certeza que deseja excluir este ebook?")) return
 
     try {
-      const response = await fetch(`/api/biblioteca?id=${ebookId}`, {
+      const response = await fetch(`/api/biblioteca?uuid=${ebookUuid}`, {
         method: "DELETE",
       })
 
@@ -102,10 +113,10 @@ export default function BibliotecaPage() {
 
       if (data.success) {
         // Atualizar a lista de ebooks
-        setEbooks(ebooks.filter((ebook) => ebook.id !== ebookId))
+        setEbooks(ebooks.filter((ebook) => ebook.uuid !== ebookUuid))
 
         // Se o ebook excluído for o selecionado, limpar a seleção
-        if (selectedEbook && selectedEbook.id === ebookId) {
+        if (selectedEbook && selectedEbook.uuid === ebookUuid) {
           setSelectedEbook(null)
           setSelectedPageIndex(null)
         }
@@ -145,10 +156,10 @@ export default function BibliotecaPage() {
     if (!selectedEbook) return []
 
     // Ordenar as páginas por índice
-    const sortedPages = [...selectedEbook.pages].sort((a, b) => a.index - b.index)
+    const sortedPages = [...selectedEbook.pages].sort((a, b) => a.pageIndex - b.pageIndex)
 
     return sortedPages.map((page) => ({
-      index: page.index,
+      index: page.pageIndex,
       content: page.content,
       isGenerated: true,
     }))
@@ -223,7 +234,7 @@ export default function BibliotecaPage() {
                   <Button variant="outline" size="sm" onClick={() => handleDownloadEbook(ebook)}>
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteEbook(ebook.id)}>
+                  <Button variant="outline" size="sm" onClick={() => handleDeleteEbook(ebook.uuid)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
