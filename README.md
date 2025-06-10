@@ -20,7 +20,8 @@ Este é um projeto Next.js que permite gerar ebooks sobre um determinado tópico
 *   **Estilização:** [Tailwind CSS](https://tailwindcss.com/)
 *   **Componentes UI:** [Shadcn/UI](https://ui.shadcn.com/)
 *   **IA:** [OpenAI GPT-4o](https://openai.com/gpt-4o/) via [Vercel AI SDK](https://sdk.vercel.ai/)
-*   **Fila & Cache:** [Vercel KV](https://vercel.com/storage/kv) (Upstash Redis)
+*   **Banco Principal:** [Neon Postgres](https://neon.tech/) com [Drizzle ORM](https://orm.drizzle.team/)
+*   **Cache & Fila:** [Vercel KV](https://vercel.com/storage/kv) (Upstash Redis)
 *   **Tarefas Agendadas:** [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs)
 *   **Gerenciador de Pacotes:** [pnpm](https://pnpm.io/)
 
@@ -96,9 +97,42 @@ Este é um projeto Next.js que permite gerar ebooks sobre um determinado tópico
 ## Variáveis de Ambiente Necessárias
 
 *   `OPENAI_API_KEY`: Sua chave secreta da API da OpenAI.
+*   `DATABASE_URL`: URL de conexão do banco Neon Postgres.
 *   `KV_REST_API_URL`: URL da API REST do seu banco de dados Vercel KV.
 *   `KV_REST_API_TOKEN`: Token de acesso ao seu banco de dados Vercel KV.
 *   `KV_URL`: (Opcional, pode ser usado como fallback) URL de conexão direta do Redis.
+
+## Arquitetura Híbrida
+
+O projeto utiliza uma arquitetura híbrida otimizada:
+
+### **Neon Postgres** (Dados Persistentes)
+- Biblioteca de ebooks salvos
+- Histórico de gerações
+- Metadados e configurações
+- Queries SQL complexas
+
+### **Redis/Vercel KV** (Processamento Tempo Real)
+- Fila de páginas em processamento
+- Cache de status em tempo real
+- Estados temporários de geração
+- Performance otimizada
+
+## Scripts do Banco de Dados
+
+```bash
+# Gerar migrações
+pnpm db:generate
+
+# Aplicar migrações
+pnpm db:migrate
+
+# Abrir Drizzle Studio
+pnpm db:studio
+
+# Push direto (desenvolvimento)
+pnpm db:push
+```
 
 ---
 
