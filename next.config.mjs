@@ -1,49 +1,21 @@
-
-let userConfig = undefined
-try {
-  // try to import ESM first
-  userConfig = await import('./v0-user-next.config.mjs')
-} catch (e) {
-  try {
-    // fallback to CJS import
-    userConfig = await import("./v0-user-next.config");
-  } catch (innerError) {
-    // ignore error
-  }
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-  },
-  typescript: {
-  },
-  images: {
-    unoptimized: true,
-  },
   experimental: {
-    webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
+    serverComponentsExternalPackages: ['@sparticuz/chromium', 'puppeteer-core']
   },
-}
-
-if (userConfig) {
-  // ESM imports will have a "default" property
-  const config = userConfig.default || userConfig
-
-  for (const key in config) {
-    if (
-      typeof nextConfig[key] === 'object' &&
-      !Array.isArray(nextConfig[key])
-    ) {
-      nextConfig[key] = {
-        ...nextConfig[key],
-        ...config[key],
-      }
-    } else {
-      nextConfig[key] = config[key]
-    }
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    config.externals.push({
+      'utf-8-validate': 'commonjs utf-8-validate',
+      'bufferutil': 'commonjs bufferutil',
+    });
+    return config;
+  },
+  env: {
+    // Fallback values para desenvolvimento
+    DATABASE_URL: process.env.DATABASE_URL || '',
+    REDIS_URL: process.env.REDIS_URL || '',
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
   }
 }
 
