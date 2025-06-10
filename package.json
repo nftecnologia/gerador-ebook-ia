@@ -5,9 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && tsc railway-worker.ts --outDir dist/worker --module commonjs --target es2020 --resolveJsonModule --esModuleInterop --skipLibCheck",
+    "build:worker-pool": "tsc railway-worker-pool.ts --outDir dist/worker --module commonjs --target es2020 --resolveJsonModule --esModuleInterop --skipLibCheck",
     "start": "next start",
     "lint": "next lint",
     "worker": "node dist/worker/railway-worker.js",
+    "worker-pool": "node dist/worker/railway-worker-pool.js",
+    "worker-pool:dev": "npm run build:worker-pool && npm run worker-pool",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",

@@ -2,12 +2,22 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "pnpm install && pnpm build"
+    "buildCommand": "npm run build:worker-pool"
   },
   "deploy": {
-    "numReplicas": 1,
-    "sleepApplication": false,
+    "startCommand": "node dist/worker/railway-worker-pool.js",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 5
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "CONCURRENT_WORKERS": "5",
+        "PROCESSING_DELAY": "500",
+        "GENERATION_TIMEOUT": "90000",
+        "POLL_INTERVAL": "1000",
+        "MAX_RETRIES": "3"
+      }
+    }
   }
-} 
+}
