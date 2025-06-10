@@ -144,17 +144,18 @@ export class HybridEbookManager {
 
       // Buscar dados do Redis
       const ebookStateData = await redis.get(`ebook:${ebookId}`)
+      
+      if (!ebookStateData) {
+        throw new Error("Estado do ebook não encontrado no Redis")
+      }
+
       const ebookState: EbookQueueState = typeof ebookStateData === "string" 
         ? JSON.parse(ebookStateData) 
         : ebookStateData as EbookQueueState
 
-      if (!ebookState) {
-        throw new Error("Estado do ebook não encontrado no Redis")
-      }
-
       // Buscar páginas do Redis
       const pageKeys = Array.from({ length: ebookState.totalPages }, (_, i) => `ebook-page:${ebookId}:${i}`)
-      const pagesData = await redis.mget<string[]>(...pageKeys)
+      const pagesData = await redis.mget(...pageKeys)
       
       const pages = pagesData
         .map((data, index) => {
