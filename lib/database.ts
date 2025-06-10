@@ -22,6 +22,10 @@ export class HybridEbookManager {
     pages: Array<{ pageIndex: number; pageTitle: string; content: string; status: string }>
   }) {
     try {
+      if (!db) {
+        throw new Error("Database connection not available")
+      }
+      
       // Inserir ebook principal
       const [ebook] = await db.insert(ebooks).values({
         uuid: ebookData.uuid,
@@ -66,6 +70,10 @@ export class HybridEbookManager {
    */
   static async getFromLibrary(uuid: string) {
     try {
+      if (!db) {
+        throw new Error("Database connection not available")
+      }
+      
       const [ebook] = await db.select().from(ebooks).where(eq(ebooks.uuid, uuid))
       
       if (!ebook) {
@@ -89,11 +97,16 @@ export class HybridEbookManager {
    */
   static async listLibrary() {
     try {
+      if (!db) {
+        throw new Error("Database connection not available")
+      }
+      
       const allEbooks = await db.select().from(ebooks).orderBy(desc(ebooks.createdAt))
       
       // Buscar páginas para cada ebook (opcional, pode ser pesado)
       const ebooksWithPages = await Promise.all(
         allEbooks.map(async (ebook) => {
+          if (!db) return ebook
           const pages = await db.select().from(ebookPages).where(eq(ebookPages.ebookUuid, ebook.uuid))
           return {
             ...ebook,
@@ -114,6 +127,10 @@ export class HybridEbookManager {
    */
   static async deleteFromLibrary(uuid: string) {
     try {
+      if (!db) {
+        throw new Error("Database connection not available")
+      }
+      
       // Excluir páginas primeiro (foreign key)
       await db.delete(ebookPages).where(eq(ebookPages.ebookUuid, uuid))
       
@@ -197,6 +214,16 @@ export class HybridEbookManager {
    */
   static async getLibraryStats() {
     try {
+      if (!db) {
+        return {
+          totalEbooks: 0,
+          completedEbooks: 0,
+          totalPages: 0,
+          completedPages: 0,
+          completionRate: 0
+        }
+      }
+      
       const totalEbooks = await db.select().from(ebooks)
       const completedEbooks = totalEbooks.filter(e => e.status === "completed")
       const totalPages = totalEbooks.reduce((sum, e) => sum + e.totalPages, 0)

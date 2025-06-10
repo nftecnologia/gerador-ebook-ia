@@ -1,20 +1,21 @@
-import { drizzle } from "drizzle-orm/neon-http"
 import { neon } from "@neondatabase/serverless"
+import { drizzle } from "drizzle-orm/neon-http"
 import * as schema from "./schema"
 
-// Verificar se a URL do banco está configurada
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is not set")
-}
+// Verificar se a variável de ambiente está definida
+const databaseUrl = process.env.DATABASE_URL
 
-// Criar conexão com Neon
-const sql = neon(process.env.DATABASE_URL)
-
-// Criar instância do Drizzle
-export const db = drizzle(sql, { schema })
+// Configurar conexão com Neon (com fallback para build)
+const sql = databaseUrl ? neon(databaseUrl) : null
+export const db = sql ? drizzle(sql, { schema }) : null
 
 // Função para testar conexão
 export async function testConnection() {
+  if (!sql) {
+    console.warn("Database connection not available")
+    return false
+  }
+  
   try {
     const result = await sql`SELECT 1 as test`
     return result.length > 0
