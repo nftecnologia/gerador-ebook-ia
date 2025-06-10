@@ -1,58 +1,30 @@
-import { Redis } from "@upstash/redis"
+import Redis from "ioredis"
 
 // Verificar se as variáveis de ambiente estão definidas
-// Priorizar a URL da API REST (KV_REST_API_URL) sobre as URLs de conexão direta
-const redisUrl = process.env.KV_REST_API_URL || process.env.REDIS_URL || process.env.KV_URL || ""
-const redisToken =
-  process.env.KV_REST_API_TOKEN || process.env.REDIS_TOKEN || process.env.KV_REST_API_READ_ONLY_TOKEN || ""
+const redisUrl = process.env.REDIS_URL || process.env.REDIS_PUBLIC_URL || ""
 
 // Criar cliente Redis apenas se as variáveis de ambiente estiverem definidas
 let redis: Redis | null = null
 
 try {
-  if (redisUrl && redisToken) {
-    // Verificar se a URL está no formato correto (https://)
-    if (redisUrl.startsWith("https://")) {
-      console.log("Inicializando cliente Redis com URL da API REST")
-      redis = new Redis({
-        url: redisUrl,
-        token: redisToken,
-      })
-    } else {
-      // Se a URL não estiver no formato correto, verificar se temos a URL da API REST disponível
-      if (process.env.KV_REST_API_URL) {
-        console.log("Usando KV_REST_API_URL em vez da URL fornecida")
-        redis = new Redis({
-          url: process.env.KV_REST_API_URL,
-          token: redisToken,
-        })
-      } else {
-        // Se não tivermos a URL da API REST, tentar extrair o hostname da URL de conexão direta
-        try {
-          const urlObj = new URL(redisUrl)
-          const hostname = urlObj.hostname
-          if (hostname.includes("upstash.io")) {
-            const restUrl = `https://${hostname}`
-            console.log(`Convertendo URL de conexão direta para API REST: ${restUrl}`)
-            redis = new Redis({
-              url: restUrl,
-              token: redisToken,
-            })
-          } else {
-            throw new Error("Não foi possível determinar a URL da API REST a partir da URL de conexão")
-          }
-        } catch (urlError) {
-          console.error("Erro ao analisar URL do Redis:", urlError)
-          throw new Error(
-            "A URL do Redis está em um formato incompatível. O cliente Upstash Redis requer uma URL da API REST que comece com https://.",
-          )
-        }
-      }
-    }
+  if (redisUrl) {
+    console.log("Inicializando cliente Redis com Railway")
+    redis = new Redis(redisUrl, {
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: false,
+      lazyConnect: true,
+    })
+
+    redis.on('error', (err) => {
+      console.error('Redis connection error:', err)
+    })
+
+    redis.on('connect', () => {
+      console.log('Redis connected successfully')
+    })
+
   } else {
-    console.warn(
-      "Variáveis de ambiente do Redis não estão definidas. A funcionalidade do Redis não funcionará corretamente.",
-    )
+    console.warn("URL do Redis não está definida. A funcionalidade do Redis não funcionará corretamente.")
   }
 } catch (error) {
   console.error("Falha ao inicializar o cliente Redis:", error)
@@ -72,11 +44,6 @@ export async function checkRedisConnection(): Promise<boolean> {
     // Verificar se as variáveis de ambiente estão definidas
     if (!redisUrl) {
       console.error("URL do Redis não está definida")
-      return false
-    }
-
-    if (!redisToken) {
-      console.error("Token do Redis não está definido")
       return false
     }
 
@@ -326,7 +293,7 @@ export async function getEbookPages(ebookId: string): Promise<EbookQueuePage[]> 
     const pageKeys = Array.from({ length: totalPages }, (_, i) => `${EBOOK_PAGE_PREFIX}${ebookId}:${i}`);
 
     // Usar MGET para buscar todas as chaves de uma vez
-    const results = await client.mget<string[]>(...pageKeys); // Esperar sempre array de strings (ou null)
+    const results = await client.mget(...pageKeys); // Esperar sempre array de strings (ou null)
 
     const pages: EbookQueuePage[] = [];
     results.forEach((pageData, index) => {
