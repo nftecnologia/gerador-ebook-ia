@@ -1,7 +1,7 @@
 import Redis from "ioredis"
 
-// Verificar se as variáveis de ambiente estão definidas
-const redisUrl = process.env.REDIS_URL || process.env.REDIS_PUBLIC_URL || ""
+// Verificar se as variáveis de ambiente estão definidas - usar URL pública por padrão
+const redisUrl = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL || ""
 
 // Criar cliente Redis apenas se as variáveis de ambiente estiverem definidas
 let redis: Redis | null = null
